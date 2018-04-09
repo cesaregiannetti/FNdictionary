@@ -1,0 +1,20 @@
+FN_fic;
+Aik=A(ik,:);
+Mik=M(ik,ik);
+tic;
+for it=2:Nt
+	FN_adapt;
+	ke=nnz(ik);
+	tl=(abs(Dt-it*dt)<loct/2)|~any(abs(Dt-it*dt)<loct/2);
+	Aeq=[Aik*Du(:,tl),-speye(ke),speye(ke);ones(1,sum(tl)),zeros(1,2*ke)];
+	beq=[Mik*(uq(ik)-dt*fun(uq(ik),wq(ik)));1];
+	f=[zeros(sum(tl),1);ones(2*ke,1)];
+	try
+		qq=linprog(f,[],[],Aeq,beq,zeros(sum(tl)+2*ke,1));
+		uq=Du(:,tl)*qq(1:sum(tl));
+	catch
+		uq=Du(:,tl)*lsqnonneg(Aeq(1:ke,1:sum(tl)),beq(1:ke));
+	end
+	wq=etaueta*uq+egetadt*wq;
+end
+toc;
